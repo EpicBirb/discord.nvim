@@ -9,13 +9,15 @@ parser.add_argument("--processes", type=int, action="store",
 parser.add_argument("--dont-skip", action="store_false",
                     default=True,
                     help="don't skip files even if they exist")
-parser.add_argument("--quality", action="store", type=int,
-                    default=80,
+parser.add_argument("--quality", action="store", type=float,
+                    default=0.3,
                     help="quality of exported image 1-100")
 args = parser.parse_args()
 
 if not os.path.exists("./icons/"):
     os.mkdir("./icons/")
+if not os.path.exists("./export/"):
+    os.mkdir("./export/")
 
 processes = args.__dict__["processes"]
 skipExisting = args.__dict__["dont_skip"]
@@ -45,7 +47,7 @@ async def main():
             await (await asyncio.create_subprocess_exec(
                 command,
                 Path("./vscode-icons/icons/", file),
-                "-o", Path("./icons/", file).with_suffix(".png"),
+                "-o", Path("./export/", file).with_suffix(".png"),
                 "-w", "1024",
                 "-h", "1024",
                 stdout=asyncio.subprocess.DEVNULL,
@@ -99,7 +101,7 @@ async def main():
                     async with lock:
                         processed += 1
                     continue
-            p = Path("./icons/", file).with_suffix(".png")
+            p = Path("./export/", file).with_suffix(".png")
             async with Proto(p) as f:
                 await loop.run_in_executor(None, lambda: f.save(ps, "WEBP", optimize=True, quality=quality))
 
