@@ -1,4 +1,5 @@
-import asyncio, os, io, argparse
+import asyncio, os, argparse, datetime
+from collections import deque
 from pathlib import Path
 from PIL import Image
 os.system("")
@@ -40,7 +41,7 @@ async def main():
         global skipExisting
         for file in files[f:to]:
             if skipExisting:
-                if loop.run_in_executor(None, os.path.isfile, Path("./icons/", file).with_suffix(".png")):
+                if await loop.run_in_executor(None, os.path.isfile, Path("./export/", file).with_suffix(".png")):
                     async with lock:
                         processed += 1
                     continue
@@ -65,16 +66,32 @@ async def main():
         offset += intervals
     asyncio.create_task(process(offset, offset+intervals+remaining))
 
+    processingAmt = deque([1 for x in range(10)], maxlen=10)
+    lastProcessedAmt = 0
     while True:
         if processed >= requiredFiles:
             break
+        if lastProcessedAmt == 0:
+            lastProcessedAmt = processed
         size = os.get_terminal_size().columns
         text = f"Processed {processed} out of {requiredFiles}: "
-        bar = size - (len(text)+2) - 2
+        percentage = f" {(processed/requiredFiles) * 100:.2f}%"
+        processingSpeed = f" {sum(processingAmt)/10}/s"
+        
+        timeTaken = sum(processingAmt)
+        if timeTaken != 0:
+            timeTaken = datetime.timedelta(seconds=(requiredFiles-processed) // (timeTaken/10))
+        else:
+            timeTaken = "suspended"
+        eta = f" ETA: {timeTaken}"
+
+        bar = size - (len(text)+2) - 1 - len(percentage) - len(processingSpeed) - len(eta)
         progress = int((processed / requiredFiles) * bar)
         shown = ("=" * (progress - 1)) + ">"
-        empty = " " * (bar - progress)
-        print(f"{' ' * (size - 1)}\x1B[0G{text}[{shown}{empty}]\x1B[0G", end="")
+        empty = " " * (bar - len(shown))
+        print(f"{text}[{shown}{empty}]{processingSpeed}{eta}{percentage}\x1B[0G", end="", flush=True)
+        processingAmt.append(processed - lastProcessedAmt)
+        lastProcessedAmt = processed
         await asyncio.sleep(1)
 
     processed = 0
@@ -117,16 +134,32 @@ async def main():
         offset += intervals
     asyncio.create_task(reduce(offset, offset+intervals+remaining, quality))
 
+    processingAmt = deque([1 for x in range(10)], maxlen=10)
+    lastProcessedAmt = 0
     while True:
         if processed >= requiredFiles:
             break
+        if lastProcessedAmt == 0:
+            lastProcessedAmt = processed
         size = os.get_terminal_size().columns
         text = f"Processed {processed} out of {requiredFiles}: "
-        bar = size - (len(text)+2) - 2
+        percentage = f" {(processed/requiredFiles) * 100:.2f}%"
+        processingSpeed = f" {sum(processingAmt)/10}/s"
+        
+        timeTaken = sum(processingAmt)
+        if timeTaken != 0:
+            timeTaken = datetime.timedelta(seconds=(requiredFiles-processed) // (timeTaken/10))
+        else:
+            timeTaken = "suspended"
+        eta = f" ETA: {timeTaken}"
+
+        bar = size - (len(text)+2) - 1 - len(percentage) - len(processingSpeed) - len(eta)
         progress = int((processed / requiredFiles) * bar)
         shown = ("=" * (progress - 1)) + ">"
-        empty = " " * (bar - progress)
-        print(f"{' ' * (size - 1)}\x1B[0G{text}[{shown}{empty}]\x1B[0G", end="")
+        empty = " " * (bar - len(shown))
+        print(f"{text}[{shown}{empty}]{processingSpeed}{eta}{percentage}\x1B[0G", end="", flush=True)
+        processingAmt.append(processed - lastProcessedAmt)
+        lastProcessedAmt = processed
         await asyncio.sleep(1)
 
 asyncio.run(main())
