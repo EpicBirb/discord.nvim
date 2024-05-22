@@ -1,4 +1,4 @@
-import asyncio, os, argparse, datetime
+import asyncio, os, argparse, datetime, json, math
 from collections import deque
 from pathlib import Path
 from PIL import Image
@@ -19,6 +19,13 @@ if not os.path.exists("./icons/"):
     os.mkdir("./icons/")
 if not os.path.exists("./export/"):
     os.mkdir("./export/")
+if not os.path.exists("./patch.json"):
+    with open("./patch.json", "w+", encoding="utf-8") as f:
+        json.dump({"include": [],"rename": {}}, f)
+        config = {"include": [],"rename": {}}
+else:
+    with open("./patch.json", "r", encoding="utf-8") as f:
+        config = json.load(f)
 
 processes = args.__dict__["processes"]
 skipExisting = args.__dict__["dont_skip"]
@@ -27,7 +34,7 @@ quality = args.__dict__["quality"]
 async def main():
     global processes, skipExisting, quality
     loop = asyncio.get_running_loop()
-    files = tuple(filter(lambda x: x.startswith("file_type_"), os.listdir("./vscode-icons/icons/")))
+    files = tuple(filter(lambda x: x.startswith("file_type_") or x in config["include"], os.listdir("./vscode-icons/icons/")))
     command = "inkscape/bin/inkscape.com"
     lock = asyncio.Lock()
     processed = 0
@@ -109,10 +116,15 @@ async def main():
             if val:
                 raise val
 
+    imgSize = tuple(math.floor(1024*0.75) for i in range(2))
+    pasteAt = tuple((1024-imgSize[0])//2 for i in range(2))
     async def reduce(f, to, quality):
-        nonlocal processed
+        nonlocal processed, imgSize
         for file in files[f:to]:
-            ps = Path("./icons/", file).with_suffix(".webp")
+            if file in config["rename"]:
+                ps = Path("./icons/", config["rename"][file])
+            else:
+                ps = Path("./icons/", file).with_suffix(".webp")
             if skipExisting:
                 if await loop.run_in_executor(None, os.path.isfile, ps):
                     async with lock:
@@ -120,7 +132,10 @@ async def main():
                     continue
             p = Path("./export/", file).with_suffix(".png")
             async with Proto(p) as f:
-                await loop.run_in_executor(None, lambda: f.save(ps, "WEBP", optimize=True, quality=quality))
+                f = f.resize(imgSize)
+                a = Image.new(f.mode, (1024, 1024))
+                a.paste(f, pasteAt)
+                await loop.run_in_executor(None, lambda: a.save(ps, "WEBP", optimize=True, quality=quality))
 
                 await loop.run_in_executor(None, f.close)
                 async with lock:
