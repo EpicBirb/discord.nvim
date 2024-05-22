@@ -5,7 +5,7 @@ minimalist discord rich presence plugin for neovim (bordem) (code ~6kb, lua/ dir
 for those who want a working discord rich presence without any extra features or that you just want to clone the repository 
 and implement the rest of your beautiful presence yourself
 
-## unnecessary info
+## unnecessary info and acknowledgments
 
 for those who were looking where the icons went. go to <https://github.com/EpicBirb/discord.nvim-assets>
 
