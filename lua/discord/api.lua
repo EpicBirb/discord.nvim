@@ -1,7 +1,7 @@
 local Presence = {
 	config = {
-		clientID = "1201359842766503946"
-		ipcpath = nil,
+		clientID = "1201359842766503946",
+		ipcpath = nil
 	},
 	augroup = vim.api.nvim_create_augroup("discordrpc", {clear=true}),
 	OPCodes = {
