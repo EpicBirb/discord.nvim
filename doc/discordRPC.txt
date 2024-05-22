@@ -1,0 +1,110 @@
+*discordRPC.txt*            For Neovim >= 0.9.5        Last change: 2024 May 22
+
+==============================================================================
+Table of Contents                                *discordRPC-table-of-contents*
+
+1. API - Functions                                             |discordRPC_api|
+2. API - Properties                                 |discordRPC_api_properties|
+
+==============================================================================
+1. Discord RPC API Functions                                   *discordRPC_api*
+
+The recommended way to access the API is to use the `vim.discordRPC` namespace
+
+:setup({config})                                         *vim.discordRPC:setup*
+
+    Setup configuration
+
+    Parameters: ~
+        {config}: Must be a table, refer to |config|
+
+:begin()                                                 *vim.discordRPC:begin*
+
+    Connect the plugin to Discord RPC
+
+:disconnect()                                       *vim.discordRPC:disconnect*
+
+    Disconnect the plugin from Discord RPC
+
+:rawSend({opcode}, {payload})                          *vim.discordRPC:rawSend*
+
+    Send something to the pipe without checking if the pipe is open or not.
+
+    Parameters: ~
+        {opcode}: Must be an integer. Refer to |OPCode|
+        {payload}: Must be a string
+
+:send({cmd}, {payload})                                   *vim.discordRPC:send*
+
+    Send something to the pipe, only if the pipe is open and ready.
+
+    Parameters: ~
+        {cmd}: Must be a string. The command you want to send
+https://discord.com/developers/docs/topics/rpc#commands-and-events-rpc-commands
+        {payload}: This is passed into args in the payload
+https://discord.com/developers/docs/topics/rpc#payloads-payload-structure
+
+                                                   *vim.discordRPC:setActivity*
+:setActivity({details}, {state}, {timestamp}, {assets}, {buttons})
+
+    Set your Discord Rich presence. If details is `nil` then the activity is
+    cleared
+
+                                                            *discordRPC-format*
+    https://discord.com/developers/docs/rich-presence/how-to
+
+    Parameters: ~
+        {details}: Must be a string. |discordRPC-format|
+        {state}: Must be a string. |discordRPC-format|
+        {timestamp}: Must be a table, may contain 'start' and/or 'end' with
+                its value being a unix timestamp. |discordRPC-format|
+        {assets}: Must be a table, may contain 'large_image', 'large_text',
+                'small_image', and/or 'small_text' with its value being
+                a string. |discordRPC-format|
+        {buttons}: Must be a table (a list), may contain more tables where
+            the keys are `label` and `url`; both values of the key are
+            strings. |discordRPC-format|
+
+:disableDefaultEvents()                   *vim.discordRPC:disableDefaultEvents*
+
+    Remove the default autocmds created by the plugin. This should be used if
+    you are planning to create your own events for your presence.
+
+:getIPCPath()                                       *vim.discordRPC:getIPCPath*
+
+    Get the IPC path to connect to Discord RPC
+
+:onConnect({err})                                    *vim.discordRPC:onConnect*
+
+    This is an internal function used when the plugin connects to Discord RPC
+
+    Parameters: ~
+        {err}: Can be `nil` or `string`
+
+==============================================================================
+
+2. Discord RPC API Properties                       *discordRPC_api_properties*
+
+`config`                                                               *config*
+    `clientID` (string): The Client ID of your Discord Application
+                Found in the Discord Developer Portal under your application
+    `ipcpath` (string | nil): The path to you Discord Client IPC pipe. 
+                If this is nil, then the plugin will search for a path,
+                otherwise it will use the path defined in this field.
+
+`OPCode`                                                               *OPCode*
+    `HANDSHAKE`: Used when first connecting to the pipe
+    `FRAME`: Sent after Discord RPC replied with READY
+                (or when |ready| is true)
+    `CLOSE`: Sent when closing the connection
+    `PING`: Ping
+    `PONG`: Pong
+
+`starttime` (number): In unix time, when vim had started            *starttime*
+
+`augroup` (number): The plugin's augroup id                           *augroup*
+
+`ready` (boolean): identifies whether you can start sending             *ready*
+                        commands to the pipe
+
+ vim:tw=78:ts=8:sw=4:sts=4:et:ft=help:norl:
