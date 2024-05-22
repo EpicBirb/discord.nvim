@@ -12,6 +12,7 @@ I mean you can just look up how you would normally install plugins for your spec
 
 ```lua
 return {
-    "EpicBirb/discord.nvim"
+    "EpicBirb/discord.nvim",
+    lazy = false
 }
 ```
