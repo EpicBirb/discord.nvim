@@ -84,6 +84,7 @@ function Presence:begin()
 	self.pipe = vim.uv.new_pipe(false)
 	local path = self:getIPCPath()
 	if path == nil then
+		self.pipe:close()
 		return print("Discord pipe not found (exceeded 10 finds). Is discord running? use :DiscordConnect")
 	end
 	
